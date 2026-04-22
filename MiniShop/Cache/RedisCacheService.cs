@@ -1,33 +1,70 @@
+using Polly;
 using StackExchange.Redis;
 using System.Text.Json;
+using MiniShop.Resilience;
 
 namespace MiniShop.Cache
 {
     public class RedisCacheService
     {
         private readonly IDatabase _db;
+        private readonly Polly.Retry.AsyncRetryPolicy _retryPolicy;
+        private readonly Polly.CircuitBreaker.AsyncCircuitBreakerPolicy _circuitBreakerPolicy;
 
         public RedisCacheService(IConnectionMultiplexer redis)
         {
             _db = redis.GetDatabase();
+            _retryPolicy = ResiliencePolicies.GetRetryPolicy();
+            _circuitBreakerPolicy = ResiliencePolicies.GetCircuitBreakerPolicy();
         }
 
         public async Task<T?> GetAsync<T>(string key)
         {
-            var value = await _db.StringGetAsync(key);
-            if (value.IsNullOrEmpty) return default;
-            return JsonSerializer.Deserialize<T>(value!);
+            try
+            {
+                return await _retryPolicy.WrapAsync(_circuitBreakerPolicy).ExecuteAsync(async () =>
+                {
+                    var value = await _db.StringGetAsync(key);
+                    if (value.IsNullOrEmpty) return default;
+                    return JsonSerializer.Deserialize<T>(value!);
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Cache GET falhou: {ex.Message}");
+                return default;
+            }
         }
 
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
         {
-            var json = JsonSerializer.Serialize(value);
-            await _db.StringSetAsync(key, json, expiry ?? TimeSpan.FromMinutes(5));
+            try
+            {
+                await _retryPolicy.WrapAsync(_circuitBreakerPolicy).ExecuteAsync(async () =>
+                {
+                    var json = JsonSerializer.Serialize(value);
+                    await _db.StringSetAsync(key, json, expiry ?? TimeSpan.FromMinutes(5));
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Cache SET falhou: {ex.Message}");
+            }
         }
 
         public async Task RemoveAsync(string key)
         {
-            await _db.KeyDeleteAsync(key);
+            try
+            {
+                await _retryPolicy.WrapAsync(_circuitBreakerPolicy).ExecuteAsync(async () =>
+                {
+                    await _db.KeyDeleteAsync(key);
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Cache REMOVE falhou: {ex.Message}");
+            }
         }
     }
 }
