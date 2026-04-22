@@ -1,0 +1,56 @@
+{
+  "imposters": [
+    {
+      "port": 3000,
+      "protocol": "http",
+      "name": "Inventory Service",
+      "stubs": [
+        {
+          "predicates": [
+            {
+              "matches": {
+                "method": "GET",
+                "path": "/inventory/.*"
+              }
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": "{\"sku\": \"ABC123\", \"available\": true, \"quantity\": 50}"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "port": 3001,
+      "protocol": "http",
+      "name": "Payment Service",
+      "stubs": [
+        {
+          "predicates": [
+            {
+              "equals": {
+                "method": "POST",
+                "path": "/payments"
+              }
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": "{\"transactionId\": \"TXN-001\", \"status\": \"approved\", \"amount\": 99.99}"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
