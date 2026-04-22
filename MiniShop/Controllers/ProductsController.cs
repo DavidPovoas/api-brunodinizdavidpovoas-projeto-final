@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MiniShop.Cache;
 using MiniShop.Data;
 using MiniShop.Models;
 
@@ -10,25 +11,37 @@ namespace MiniShop.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly RedisCacheService _cache;
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(AppDbContext context, RedisCacheService cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // GET: api/products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            var cached = await _cache.GetAsync<List<Product>>("products:all");
+            if (cached != null) return cached;
+
+            var products = await _context.Products.ToListAsync();
+            await _cache.SetAsync("products:all", products);
+            return products;
         }
 
         // GET: api/products/1
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
+            var cached = await _cache.GetAsync<Product>($"products:{id}");
+            if (cached != null) return cached;
+
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
+
+            await _cache.SetAsync($"products:{id}", product);
             return product;
         }
 
@@ -38,6 +51,7 @@ namespace MiniShop.Controllers
         {
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
+            await _cache.RemoveAsync("products:all");
             return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
         }
 
@@ -48,6 +62,8 @@ namespace MiniShop.Controllers
             if (id != product.Id) return BadRequest();
             _context.Entry(product).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            await _cache.RemoveAsync($"products:{id}");
+            await _cache.RemoveAsync("products:all");
             return NoContent();
         }
 
@@ -59,6 +75,8 @@ namespace MiniShop.Controllers
             if (product == null) return NotFound();
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
+            await _cache.RemoveAsync($"products:{id}");
+            await _cache.RemoveAsync("products:all");
             return NoContent();
         }
     }
