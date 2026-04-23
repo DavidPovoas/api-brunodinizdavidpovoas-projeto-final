@@ -13,9 +13,9 @@ namespace MiniShop.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly IRedisCacheService _cache;
+        private readonly HybridCacheService _cache;
 
-        public ProductsController(AppDbContext context, IRedisCacheService cache)
+        public ProductsController(AppDbContext context, HybridCacheService cache)
         {
             _context = context;
             _cache = cache;
