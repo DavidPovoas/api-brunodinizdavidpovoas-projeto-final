@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniShop.Cache;
@@ -21,15 +22,24 @@ namespace MiniShop.Tests
 
         private ProductsController GetController(AppDbContext context)
         {
-            var mockCache = new Mock<IRedisCacheService>();
-            mockCache.Setup(c => c.GetAsync<List<Product>>(It.IsAny<string>()))
-                     .ReturnsAsync((List<Product>?)null);
-            mockCache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<List<Product>>(), null))
-                     .Returns(Task.CompletedTask);
-            mockCache.Setup(c => c.RemoveAsync(It.IsAny<string>()))
-                     .Returns(Task.CompletedTask);
+            var mockRedis = new Mock<IRedisCacheService>();
+            mockRedis.Setup(c => c.GetAsync<List<Product>>(It.IsAny<string>()))
+                    .ReturnsAsync((List<Product>?)null);
+            mockRedis.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<List<Product>>(), null))
+                    .Returns(Task.CompletedTask);
+            mockRedis.Setup(c => c.RemoveAsync(It.IsAny<string>()))
+                    .Returns(Task.CompletedTask);
 
-            return new ProductsController(context, mockCache.Object);
+            var mockMemory = new Mock<IMemoryCache>();
+            object? outVal = null;
+            mockMemory.Setup(m => m.TryGetValue(It.IsAny<object>(), out outVal))
+                    .Returns(false);
+            mockMemory.Setup(m => m.CreateEntry(It.IsAny<object>()))
+                    .Returns(Mock.Of<ICacheEntry>());
+
+            var hybridCache = new HybridCacheService(mockMemory.Object, mockRedis.Object);
+
+            return new ProductsController(context, hybridCache);
         }
 
         [Fact]

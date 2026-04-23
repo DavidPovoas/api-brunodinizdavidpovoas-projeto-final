@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniShop</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <h1>🛒 MiniShop</h1>
+  <button id="btnLogout" onclick="logout()">Logout</button>
+</nav>
+
+<div class="container">
+
+  <!-- LOGIN / REGISTO -->
+  <div id="loginSection">
+    <div class="card">
+      <h2>Autenticação</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('login')">Login</button>
+        <button class="tab" onclick="showTab('register')">Registar</button>
+      </div>
+      <div id="loginMsg"></div>
+      <div id="tabLogin">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button class="btn btn-primary" onclick="login()">Entrar</button>
+      </div>
+      <div id="tabRegister" style="display:none">
+        <input type="text" id="regName" placeholder="Nome">
+        <input type="email" id="regEmail" placeholder="Email">
+        <input type="password" id="regPass" placeholder="Password">
+        <button class="btn btn-success" onclick="register()">Registar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appSection" style="display:none">
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('produtos')">Produtos</button>
+      <button class="tab" onclick="showSection('utilizadores')">Utilizadores</button>
+      <button class="tab" onclick="showSection('inventario')">Inventário</button>
+      <button class="tab" onclick="showSection('pagamentos')">Pagamentos</button>
+    </div>
+
+    <!-- PRODUTOS -->
+    <div id="secProdutos" class="section active">
+      <div class="card">
+        <h2>Produtos</h2>
+        <div id="prodMsg"></div>
+        <div class="form-row">
+          <input type="text" id="pNome" placeholder="Nome">
+          <input type="text" id="pDesc" placeholder="Descrição">
+        </div>
+        <div class="form-row">
+          <input type="number" id="pPreco" placeholder="Preço" step="0.01">
+          <input type="number" id="pStock" placeholder="Stock">
+          <input type="text" id="pSku" placeholder="SKU">
+        </div>
+        <input type="hidden" id="pId">
+        <button class="btn btn-success" onclick="saveProduto()">Guardar</button>
+        <button class="btn btn-warning" onclick="clearProdForm()">Limpar</button>
+      </div>
+      <div class="card">
+        <table id="tblProdutos">
+          <thead>
+            <tr><th>ID</th><th>Nome</th><th>Preço</th><th>Stock</th><th>SKU</th><th>Ações</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- UTILIZADORES -->
+    <div id="secUtilizadores" class="section">
+      <div class="card">
+        <h2>Utilizadores</h2>
+        <div id="userMsg"></div>
+        <table id="tblUsers">
+          <thead>
+            <tr><th>ID</th><th>Nome</th><th>Email</th><th>Role</th><th>Criado em</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVENTÁRIO -->
+    <div id="secInventario" class="section">
+      <div class="card">
+        <h2>Inventário (Mountebank)</h2>
+        <div id="invMsg"></div>
+        <input type="text" id="invSku" placeholder="SKU (ex: ABC123)">
+        <button class="btn btn-primary" onclick="checkInventario()">Verificar</button>
+        <pre id="invResult" style="display:none"></pre>
+      </div>
+    </div>
+
+    <!-- PAGAMENTOS -->
+    <div id="secPagamentos" class="section">
+      <div class="card">
+        <h2>Pagamentos (Mountebank)</h2>
+        <div id="pagMsg"></div>
+        <input type="text" id="pagSku" placeholder="SKU do produto">
+        <input type="number" id="pagValor" placeholder="Valor (ex: 99.99)" step="0.01">
+        <button class="btn btn-primary" onclick="processarPagamento()">Processar Pagamento</button>
+        <pre id="pagResult" style="display:none"></pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if (getToken()) showApp();
+</script>
+
+</body>
+</html>

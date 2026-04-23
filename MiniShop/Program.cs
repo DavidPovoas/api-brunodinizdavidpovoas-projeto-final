@@ -67,10 +67,21 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
-// Swagger
+
 app.UseSwagger();
+app.UseCors();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
