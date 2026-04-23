@@ -15,7 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
-builder.Services.AddSingleton<RedisCacheService>();
+builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
 // JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

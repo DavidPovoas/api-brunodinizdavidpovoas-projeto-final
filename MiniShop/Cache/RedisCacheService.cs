@@ -5,7 +5,14 @@ using MiniShop.Resilience;
 
 namespace MiniShop.Cache
 {
-    public class RedisCacheService
+    public interface IRedisCacheService
+    {
+        Task<T?> GetAsync<T>(string key);
+        Task SetAsync<T>(string key, T value, TimeSpan? expiry = null);
+        Task RemoveAsync(string key);
+    }
+
+    public class RedisCacheService : IRedisCacheService
     {
         private readonly IDatabase _db;
         private readonly Polly.Retry.AsyncRetryPolicy _retryPolicy;
@@ -18,7 +25,7 @@ namespace MiniShop.Cache
             _circuitBreakerPolicy = ResiliencePolicies.GetCircuitBreakerPolicy();
         }
 
-        public async Task<T?> GetAsync<T>(string key)
+        public virtual async Task<T?> GetAsync<T>(string key)
         {
             try
             {
@@ -36,7 +43,7 @@ namespace MiniShop.Cache
             }
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
+        public virtual async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
         {
             try
             {
@@ -52,7 +59,7 @@ namespace MiniShop.Cache
             }
         }
 
-        public async Task RemoveAsync(string key)
+        public virtual async Task RemoveAsync(string key)
         {
             try
             {

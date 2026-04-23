@@ -13,41 +13,35 @@ namespace MiniShop.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly RedisCacheService _cache;
+        private readonly IRedisCacheService _cache;
 
-        public ProductsController(AppDbContext context, RedisCacheService cache)
+        public ProductsController(AppDbContext context, IRedisCacheService cache)
         {
             _context = context;
             _cache = cache;
         }
 
-        // GET: api/products
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
             var cached = await _cache.GetAsync<List<Product>>("products:all");
             if (cached != null) return cached;
-
             var products = await _context.Products.ToListAsync();
             await _cache.SetAsync("products:all", products);
             return products;
         }
 
-        // GET: api/products/1
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var cached = await _cache.GetAsync<Product>($"products:{id}");
             if (cached != null) return cached;
-
             var product = await _context.Products.FindAsync(id);
             if (product == null) return NotFound();
-
             await _cache.SetAsync($"products:{id}", product);
             return product;
         }
 
-        // POST: api/products
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct(Product product)
         {
@@ -57,7 +51,6 @@ namespace MiniShop.Controllers
             return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
         }
 
-        // PUT: api/products/1
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, Product product)
         {
@@ -69,7 +62,6 @@ namespace MiniShop.Controllers
             return NoContent();
         }
 
-        // DELETE: api/products/1
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
